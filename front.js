@@ -43,16 +43,18 @@ FileRetriever.prototype.saveToAdb = function(e, t, i) {
 }
 
 app.openFromADB = function(e) {
-    // ipc.send('ping', 'ping');
-    ipc.on('pong', (e, a) => { console.log(a) });
+    app.retriever.setAdbFilePath("/system/etc/");
     function t(t, i) {
         t ? app.notify.showError(t) : i && (app.setData(i), app.setMetaData({
             name: util.getName(e)
         }))
     };
-    ipc.send('ping', 'ping');
     e ? app.retriever.openFromAdbDialog(e, t) : app.retriever.openFromAdbDialog(function(e) {
-        e && (document.location.href = document.location.pathname + "?filepath=" + encodeURIComponent(e))
+        //e && (document.location.href = document.location.pathname + "?filepath=" + encodeURIComponent(e))
+        // console.log(e)
+        ipc.send('ping', e);
+        ipc.on('pong', (e, a) => { console.log(a) });
+        document.location.href = document.location.pathname + "?filepath=" + encodeURIComponent(e);
     });
 };
 

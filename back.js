@@ -1,25 +1,27 @@
 const ipc = require('electron').ipcMain
 const process = require('child_process');
 
-function shell(cmd, callback) {
-    process.exec(cmd, callback);
-}
-
-function spawn(cmd, args, callback) {
-    process.spawn(cmd, args, callback);
-}
-
-function pullFromAdb(e, callback) {
-    spawn('adb', ['pull', e], callback);
-}
-
-shell("adb devices", (error, stdout, stderr) => {
+function cmdcb(error, stdout, stderr) {
     if (error) {
-      console.error(`执行出错: ${error}`);
-      return;
+        console.error(`error: ${error}`);
+        return;
     }
     console.log(`stdout: ${stdout}`);
     console.log(`stderr: ${stderr}`);
-  });
+}
 
-ipc.on('ping', (e, a) => { e.sender.send('pong', 'pong'); console.log(a) });
+function shell(cmd, cb) {
+    process.exec(cmd, cb);
+}
+
+function spawn(cmd, args, cb) {
+    process.spawn(cmd, args, cb);
+}
+
+function pullFromAdb(src, dst, cb) {
+    spawn('adb', ['pull', src, dst], cb);
+}
+
+shell("adb devices", cmdcb);
+
+ipc.on('ping', (e, a) => { pullFromAdb(a, '.', {}); e.sender.send('pong', a); console.log(a) });

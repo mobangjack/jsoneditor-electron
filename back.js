@@ -16,7 +16,7 @@ function shell(cmd, cb) {
 }
 
 function spawn(cmd, args, cb) {
-    process.spawn(cmd, args, cb);
+    process.spawnSync(cmd, args, cb);
 }
 
 function pullFromAdb(src, dst, cb) {

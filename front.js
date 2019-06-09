@@ -8,6 +8,8 @@ FileRetriever.prototype.getAdbFilePath = function() {
     return this.filepath
 };
 
+app.retriever.setAdbFilePath("/system/etc/");
+
 FileRetriever.prototype.openFromAdbDialog = function(e) {
     util.prompt({
         title: "Open from ADB",
@@ -32,29 +34,52 @@ FileRetriever.prototype.saveToAdbDialog = function(e) {
     })
 };
 
-FileRetriever.prototype.openFromAdb = function(e, t, i) {
+FileRetriever.prototype.openFromAdb = function(e, t) {
     this.setAdbFilePath(e);
-    var r = location.origin + location.pathname + "?url=" + encodeURIComponent(e);
+    var name = util.getName(e);
+    var fullname = name + ".json";
+    var msg = {"src_path": e, "dst_path": fullname};
+    var returnValue = ipc.sendSync('openFromAdbReq', msg);
+    if (returnValue)
+    {
+        t(returnValue);
+        return;
+    }
+    else
+    {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var result = e.target.result;
+            app.setData(result);
+            app.setMetaData({
+                name: name
+            }),
+            app.setLocalStorageData(result);
+        };
+        reader.onerror = function(e) {
+            t(e);
+        };
+        reader.readAsText(fullname);
+    }
 }
 
 FileRetriever.prototype.saveToAdb = function(e, t, i) {
     this.setAdbFilePath(e);
-    var r = location.origin + location.pathname + "?url=" + encodeURIComponent(e);
+    var name = util.getName(e);
+    var fullname = name + ".json";
+    var msg = {"src_path": fullname, "dst_path": e};
+    var returnValue = ipc.sendSync('saveToAdbReq', msg);
+    i(returnValue);
 }
 
 app.openFromADB = function(e) {
-    app.retriever.setAdbFilePath("/system/etc/");
     function t(t, i) {
         t ? app.notify.showError(t) : i && (app.setData(i), app.setMetaData({
             name: util.getName(e)
         }))
     };
     e ? app.retriever.openFromAdbDialog(e, t) : app.retriever.openFromAdbDialog(function(e) {
-        //e && (document.location.href = document.location.pathname + "?filepath=" + encodeURIComponent(e))
-        // console.log(e)
-        ipc.send('ping', e);
-        ipc.on('pong', (e, a) => { console.log(a) });
-        document.location.href = document.location.pathname + "?filepath=" + encodeURIComponent(e);
+        e && app.retriever.openFromAdb(e, t)
     });
 };
 

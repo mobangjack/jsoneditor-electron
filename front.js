@@ -40,34 +40,59 @@ FileRetriever.prototype.openFromAdb = function(e, t) {
     var fullname = name + ".json";
     var msg = {"src_path": e, "dst_path": fullname};
     var returnValue = ipc.sendSync('openFromAdbReq', msg);
-    if (returnValue)
+    var status = returnValue.status;
+    var data = returnValue.data;
+    if (status != 'ok')
     {
-        t(returnValue);
+        t(status);
         return;
     }
     else
     {
-        var reader = new FileReader();
-        reader.onload = function(e) {
-            var result = e.target.result;
-            app.setData(result);
-            app.setMetaData({
-                name: name
-            }),
-            app.setLocalStorageData(result);
-        };
-        reader.onerror = function(e) {
-            t(e);
-        };
-        reader.readAsText(fullname);
+        app.setData(data);
+        app.setMetaData({
+            name: name
+        });
+        app.setLocalStorageData(data);
     }
 }
 
 FileRetriever.prototype.saveToAdb = function(e, t, i) {
-    this.setAdbFilePath(e);
     var name = util.getName(e);
-    var fullname = name + ".json";
-    var msg = {"src_path": fullname, "dst_path": e};
+    if ((!name) || name == "")
+    {
+        if (app.doc.name)
+        {
+            name = app.doc.name;
+            var lastToken = e.substr(e.length - 1, 1);
+            if (lastToken == "/")
+            {
+                e = e + name;
+            }
+            else
+            {
+                e = e + "/" + name;
+            }
+        }
+        else
+        {
+            var returnValue = "File name is empty!";
+            i(returnValue);
+            return;
+        }
+    }
+    if (!e.endsWith(".json"))
+    {
+        e = e + ".json";
+    }
+    this.setAdbFilePath(e);
+    if (!app.doc.name)
+    {
+        app.doc.name = name;
+    }
+    var data = app.getData();
+    var src_path = app.doc.name + ".json";
+    var msg = {"src_path": src_path, "data": data, "dst_path": e};
     var returnValue = ipc.sendSync('saveToAdbReq', msg);
     i(returnValue);
 }
@@ -89,7 +114,7 @@ app.saveToADB = function() {
     app.retriever.saveToAdbDialog(function(t) {
         t && app.retriever.saveToAdb(t, e,
             function(e) {
-                e ? app.notify.showError(e) : app.notify.showNotification('File has been saved to ADB "' + t + '"', 1e3)
+                e ? app.notify.showError(e) : app.notify.showNotification('File has been saved to ADB "' + (t.endsWith(".json") ? t : t + ".json") + '"', 1e3)
             })
     })
 };

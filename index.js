@@ -37,7 +37,7 @@ function createWindow () {
   }));
 
   // Open the DevTools.
-  win.webContents.openDevTools()
+  // win.webContents.openDevTools()
 
   var script = wrapJavaScript("front.js");
   // code.push('console.log(script);');

@@ -58,6 +58,7 @@ FileRetriever.prototype.openFromAdb = function(e, t) {
 }
 
 FileRetriever.prototype.saveToAdb = function(e, t, i) {
+    app.sync();
     var name = util.getName(e);
     if ((!name) || name == "")
     {
